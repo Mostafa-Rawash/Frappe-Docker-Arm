@@ -1,0 +1,85 @@
+version: "3"
+
+services:
+  mariadb:
+    image: mariadb:10.6
+    restart: on-failure
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed # Temporary fix for MariaDB 10.6
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      # Sometimes db initialization takes longer than 10 seconds and site-creator goes away.
+      # Frappe doesn't use CONVERT_TZ() function that requires time zone info, so we can just skip it.
+      - MYSQL_INITDB_SKIP_TZINFO=1
+    volumes:
+      - mariadb-vol:/var/lib/mysql
+      # - ./mariadb-vol:/var/lib/mysql:rw
+    ## network_mode: host
+    networks:
+    	default:
+         ipv4_address: 172.19.0.9
+
+
+  redis-cache:
+    image: redis:latest
+    restart: on-failure
+    volumes:
+      - redis-cache-vol:/data
+
+  redis-queue:
+    image: redis:latest
+    restart: on-failure
+    volumes:
+      - redis-queue-vol:/data
+
+  redis-socketio:
+    image: redis:latest
+    restart: on-failure
+    volumes:
+      - redis-socketio-vol:/data
+
+
+  frappe:
+    # image: frappe/bench:latest
+    build: 
+      context: ./build/bench
+    container_name: frappe
+    command: sleep infinity
+    environment:
+      - SHELL=/bin/bash
+      - MARIADB_HOST=${MARIADB_HOST}
+      - REDIS_CACHE=redis-cache:6379
+      - REDIS_QUEUE=redis-queue:6379
+      - REDIS_SOCKETIO=redis-socketio:6379
+      - SOCKETIO_PORT=9000
+      - AUTO_MIGRATE=1
+    depends_on:
+      - redis-cache
+      - redis-queue
+      - redis-socketio   
+      - mariadb
+    volumes:
+      - frappe-vol:/home/frappe:rw
+      # - ..:/workspace:cached
+      # - mariadb-vol:/home/frappe/
+      - ./frappe-dev-vol:/home/frappe/dev:rw
+    working_dir: /home/frappe/
+    # /workspace/development
+    ports:
+      - "80-85:8000-8005"
+      - "9000-9005:9000-9005"
+    # network_mode: host
+
+
+volumes:
+  mariadb-vol:
+  redis-cache-vol:
+  redis-queue-vol:
+  redis-socketio-vol:
+  frappe-vol:
+    # external: true
+
+
