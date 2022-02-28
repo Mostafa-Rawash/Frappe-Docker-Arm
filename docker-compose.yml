@@ -18,9 +18,9 @@ services:
       - mariadb-vol:/var/lib/mysql
       # - ./mariadb-vol:/var/lib/mysql:rw
     ## network_mode: host
-    networks:
-    	default:
-         ipv4_address: 172.19.0.9
+    # networks:
+    #   default:
+    #     ipv4_address: 172.19.0.9
 
 
   redis-cache:
@@ -83,3 +83,7 @@ volumes:
     # external: true
 
 
+# networks:
+#   default:
+#     driver: host
+#     # external: true
