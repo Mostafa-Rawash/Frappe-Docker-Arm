@@ -10,7 +10,6 @@ services:
       - --skip-character-set-client-handshake
       - --skip-innodb-read-only-compressed # Temporary fix for MariaDB 10.6
     environment:
-      - MARIADB_HOST=${MARIADB_HOST}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       # Sometimes db initialization takes longer than 10 seconds and site-creator goes away.
       # Frappe doesn't use CONVERT_TZ() function that requires time zone info, so we can just skip it.
@@ -19,9 +18,11 @@ services:
       - mariadb-vol:/var/lib/mysql
       # - ./mariadb-vol:/var/lib/mysql:rw
     ## network_mode: host
-#    networks:
- #      default:
-  #       ipv4_address: 172.21.0.6
+    networks:
+       default:
+
+    external: true
+         ipv4_address:  172.20.0.3
 
   redis-cache:
     image: redis:latest
@@ -83,7 +84,7 @@ volumes:
     # external: true
 
 
-#networks:
-  #default:
-    #external: true
-   # name: frappe-docker_default
+# networks:
+#   default:
+#     driver: host
+#     # external: true
